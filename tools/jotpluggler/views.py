@@ -268,7 +268,14 @@ class DataTreeView(Observer):
         label = child.name
 
         if '/' not in child.full_path:
-          sample_count = len(self.data_manager.time_series_data.get(child.full_path, {}).get('t', []))
+          msg_type = child.full_path
+          sample_count = 0
+          # Find a representative time series for this message type to get its length TODO: make this less scuffed
+          first_matching_path = next((path for path in self.data_manager.get_all_paths() if path.startswith(f"{msg_type}/")), None)
+          if first_matching_path:
+            ts_data = self.data_manager.get_time_series_data(first_matching_path)
+            if ts_data:
+              sample_count = len(ts_data[0]) # ts_data is a tuple of (timestamps, values)
           label = f"{child.name} ({sample_count} samples)"
 
         should_open = bool(search_term) and len(search_term) > 1 and any(search_term in path for path in self._get_all_descendant_paths(child))
